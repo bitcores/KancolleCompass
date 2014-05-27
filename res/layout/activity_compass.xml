@@ -1,8 +1,30 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.bitcores.kancollecompass.CompassActivity"
-    tools:ignore="MergeRootFrame" />
+	>  
+    
+    <ImageView
+        android:id="@+id/compassback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/compassback"
+    	/>
+    
+    <TextView
+        android:id="@+id/compasshead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+    	android:layout_below="@+id/compassback"
+    	/>
 
+    <ImageView
+        android:id="@+id/compassneedle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/compassback"
+        android:layout_marginLeft="136dp"
+        android:layout_marginBottom="48dp"
+        android:src="@drawable/compassneedle" />
+
+</RelativeLayout>

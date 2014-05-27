@@ -3,25 +3,46 @@ package net.bitcores.kancollecompass;
 import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.os.Build;
 
-public class CompassActivity extends Activity {
-
+public class CompassActivity extends Activity implements SensorEventListener {
+	
+	private ImageView compassBack;
+	private ImageView compassNeedle;
+	private float currentDegree = 0f;
+	private SensorManager mSensorManager;
+	
+	TextView compassHead;
+	Sensor accelerometer;
+	Sensor magnetometer;
+	float[] mGravity;
+	float[] mGeomagnetic;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_compass);
-
-		if (savedInstanceState == null) {
-			getFragmentManager().beginTransaction()
-					.add(R.id.container, new PlaceholderFragment()).commit();
-		}
+		compassBack = (ImageView)this.findViewById(R.id.compassback);
+		compassNeedle = (ImageView)this.findViewById(R.id.compassneedle);
+		compassHead = (TextView)this.findViewById(R.id.compasshead);
+		mSensorManager = (SensorManager)this.getSystemService(SENSOR_SERVICE);
+		accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		
 	}
 
 	@Override
@@ -43,22 +64,63 @@ public class CompassActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+		mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		mSensorManager.unregisterListener(this);
+	}
 
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
-	public static class PlaceholderFragment extends Fragment {
-
-		public PlaceholderFragment() {
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+			mGravity = event.values;
 		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_compass,
-					container, false);
-			return rootView;
+		if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+			mGeomagnetic = event.values;
 		}
+		
+		if (mGravity != null && mGeomagnetic != null) {
+			float R[] = new float[9];
+			float I[] = new float[9];
+			
+			boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+			if (success) {
+				float orientation[] = new float[3];
+				SensorManager.getOrientation(R, orientation);
+				float degree = Math.round(Math.toDegrees(orientation[0]));
+
+				compassHead.setText("Heading: " + Float.toString(degree) + " degrees");
+				
+				RotateAnimation ra = new RotateAnimation(currentDegree,	-degree, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+				
+				ra.setDuration(210);
+				
+				ra.setFillAfter(true);
+				
+				compassNeedle.startAnimation(ra);
+				currentDegree = -degree;
+			}
+			
+			
+			
+		}
+		
+		
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		
 	}
 
 }
